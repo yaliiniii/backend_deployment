@@ -26,13 +26,13 @@ def book_appointment(
 
 @router.get("/user/me", response_model=List[appointment_schemas.AppointmentResponse])
 def get_user_appointments(db: Session = Depends(database.get_db)):
-    # Placeholder
+    
     return db.query(models.Appointment).all()
 
 
 @router.get("/doctor/me", response_model=List[appointment_schemas.AppointmentResponse])
 def get_doctor_appointments(db: Session = Depends(database.get_db)):
-    # Placeholder
+   
     return db.query(models.Appointment).all()
 
 

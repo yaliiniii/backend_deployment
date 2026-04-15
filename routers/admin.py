@@ -9,7 +9,7 @@ from fastapi.security import APIKeyHeader
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-# Simple hardcoded admin credentials
+
 ADMIN_EMAIL = "admin@freshpath.com"
 ADMIN_PASSWORD = "admin123"
 ADMIN_TOKEN = "freshpath-admin-secret-token"

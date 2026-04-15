@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 import models, database
 from schemas import doctor as doctor_schemas
 from typing import List
+from security import get_password_hash, verify_password
+
 
 router = APIRouter(prefix="/doctors", tags=["doctors"])
 
@@ -21,7 +23,10 @@ def signup(doctor: doctor_schemas.DoctorCreate, db: Session = Depends(database.g
     if db_doctor:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    new_doctor = models.Doctor(**doctor.model_dump())
+    doctor_data = doctor.model_dump()
+    doctor_data["password"] = get_password_hash(doctor_data["password"])
+    new_doctor = models.Doctor(**doctor_data)
+
     db.add(new_doctor)
     db.commit()
     db.refresh(new_doctor)
@@ -32,7 +37,7 @@ def signup(doctor: doctor_schemas.DoctorCreate, db: Session = Depends(database.g
 def login(doctor: doctor_schemas.DoctorLogin, db: Session = Depends(database.get_db)):
     email = doctor.email.lower().strip()
     db_doctor = db.query(models.Doctor).filter(models.Doctor.email == email).first()
-    if not db_doctor or db_doctor.password != doctor.password:
+    if not db_doctor or not verify_password(doctor.password, db_doctor.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
@@ -41,7 +46,7 @@ def login(doctor: doctor_schemas.DoctorLogin, db: Session = Depends(database.get
 
 @router.get("/me", response_model=doctor_schemas.DoctorResponse)
 def get_me(db: Session = Depends(database.get_db)):
-    # Placeholder
+
     doctor = db.query(models.Doctor).first()
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")

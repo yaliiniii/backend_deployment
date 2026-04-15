@@ -24,12 +24,12 @@ class Appointment(Base):
     __tablename__ = "appointments"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=True)  # Optional link to user
-    user_name = Column(String, nullable=True)  # Name of the user who booked
+    user_id = Column(Integer, nullable=True)  
+    user_name = Column(String, nullable=True)  
     doctor_name = Column(String)
     appointment_date = Column(Date)
     appointment_time = Column(String)
-    status = Column(String, default="Pending")  # Pending, Accepted, Cancelled
+    status = Column(String, default="Pending")  
     notes = Column(String, nullable=True)
 
 

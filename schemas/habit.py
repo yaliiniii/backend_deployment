@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional
 
 
 class HabitCreate(BaseModel):
@@ -13,7 +12,7 @@ class HabitUpdate(BaseModel):
 
 
 class HabitResponse(BaseModel):
-    id: int  # This will be the HabitDefinition ID
+    id: int  
     name: str
     completed: bool = False
     date: date

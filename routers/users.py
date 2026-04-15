@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 import models, database
 from schemas import user as user_schemas
 from datetime import datetime
-from .admin import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN
+from routers.admin import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN
+from security import get_password_hash, verify_password
+
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -11,34 +13,32 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.post("/signup", response_model=user_schemas.UserResponse)
 def signup(user: user_schemas.UserCreate, db: Session = Depends(database.get_db)):
+
     user.email = user.email.lower().strip()
+
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
+
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-
-    target_date = None
-    if user.target_quit_date:
-        try:
-            target_date = datetime.strptime(user.target_quit_date, "%Y-%m-%d").date()
-        except ValueError:
-            pass
 
     new_user = models.User(
         name=user.name,
         email=user.email,
-        password=user.password,
+        password=get_password_hash(user.password),
         age=user.age,
         phone=user.phone,
         activity=user.activity,
         years_smoked=user.years_smoked,
         cigarettes_per_day=user.cigarettes_per_day,
-        target_quit_date=target_date,
+        target_quit_date=user.target_quit_date,
         reason_quitting=user.reason_quitting,
         triggers=user.triggers,
     )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
     return new_user
 
 
@@ -46,7 +46,7 @@ def signup(user: user_schemas.UserCreate, db: Session = Depends(database.get_db)
 def login(user: user_schemas.UserLogin, db: Session = Depends(database.get_db)):
     email = user.email.lower().strip()
     
-    # Check for Admin Credentials first
+    
     if email == ADMIN_EMAIL and user.password == ADMIN_PASSWORD:
         return {
             "id": 0, 
@@ -57,7 +57,7 @@ def login(user: user_schemas.UserLogin, db: Session = Depends(database.get_db)):
         }
         
     db_user = db.query(models.User).filter(models.User.email == email).first()
-    if not db_user or db_user.password != user.password:
+    if not db_user or not verify_password(user.password, db_user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
@@ -66,14 +66,14 @@ def login(user: user_schemas.UserLogin, db: Session = Depends(database.get_db)):
 
 @router.get("/me", response_model=user_schemas.UserResponse)
 def get_me(db: Session = Depends(database.get_db)):
-    # Placeholder for current user logic
+
     user = db.query(models.User).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
-@router.put("/me", response_model=user_schemas.UserResponse)
+@router.patch("/me", response_model=user_schemas.UserResponse)
 def update_me(
     user_update: user_schemas.UserUpdate, db: Session = Depends(database.get_db)
 ):
@@ -83,7 +83,7 @@ def update_me(
 
     update_data = user_update.model_dump(exclude_unset=True)
 
-    # Check if email is being updated and if it's already taken by another user
+  
     if "email" in update_data and update_data["email"] != db_user.email:
         existing_user = (
             db.query(models.User)
@@ -146,7 +146,7 @@ def update_user(
 
     update_data = user_update.model_dump(exclude_unset=True)
 
-    # Check if email is being updated and if it's already taken by another user
+
     if "email" in update_data and update_data["email"] != db_user.email:
         existing_user = (
             db.query(models.User)

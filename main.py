@@ -5,12 +5,12 @@ import models
 import database
 from routers import users, contact, appointments, habits, doctors, admin
 
-# Create database tables
+
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="FreshPath API")
 
-# Configure CORS to allow frontend to connect
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )   
  
-# Include the routers with /api prefix as expected by frontend
+
 app.include_router(users.router, prefix="/api")
 app.include_router(doctors.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")

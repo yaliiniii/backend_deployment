@@ -1,13 +1,12 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
 
 
 class DoctorBase(BaseModel):
     name: str
     email: EmailStr
     license_number: str
-    specialization: Optional[str] = None
-    profile_image: Optional[str] = None
+    specialization: str
+    profile_image: str
 
 
 class DoctorCreate(DoctorBase):
